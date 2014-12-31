@@ -1185,7 +1185,6 @@ class S3(object):
             raise S3Error(response)
 
         debug("MD5 sums: computed=%s, received=%s" % (md5_computed, response["headers"]["etag"]))
-        debug("keys: %s", response["headers"].keys())
         if ("x-amz-server-side-encryption-aws-kms-key-id" not in response["headers"]) and (response["headers"]["etag"].strip('"\'') != md5_hash.hexdigest()):
             warning("MD5 Sums don't match!")
             if retries:
