@@ -2189,7 +2189,7 @@ def main():
     optparser.add_option(      "--add-header", dest="add_header", action="append", metavar="NAME:VALUE", help="Add a given HTTP header to the upload request. Can be used multiple times. For instance set 'Expires' or 'Cache-Control' headers (or both) using this option.")
     optparser.add_option(      "--remove-header", dest="remove_headers", action="append", metavar="NAME", help="Remove a given HTTP header.  Can be used multiple times.  For instance, remove 'Expires' or 'Cache-Control' headers (or both) using this option. [modify]")
 
-    optparser.add_option(      "--server-side-encryption", dest="server_side_encryption", action="store_true", help="Specifies that server-side encryption will be used when putting objects. [put, sync, cp, modify]")
+    optparser.add_option(      "--server-side-encryption", dest="server_side_encryption", metavar="TYPE", help="Specifies that server-side encryption will be used when putting objects. [put, sync, cp, modify]. Supports either 'sse-kms' or 'sse-s3'")
 
     optparser.add_option(      "--encoding", dest="encoding", metavar="ENCODING", help="Override autodetected terminal and filesystem encoding (character set). Autodetected: %s" % preferred_encoding)
     optparser.add_option(      "--add-encoding-exts", dest="add_encoding_exts", metavar="EXTENSIONs", help="Add encoding to these comma delimited extensions i.e. (css,js,html) when uploading to S3 )")
@@ -2231,6 +2231,7 @@ def main():
     optparser.add_option("--check-certificate", dest="check_ssl_certificate", action="store_true", help="Check SSL certificate validity")
     optparser.add_option("--no-check-certificate", dest="check_ssl_certificate", action="store_false", help="Check SSL certificate validity")
     optparser.add_option("--signature-v2", dest="signature_v2", action="store_true", help="Use AWS Signature version 2 instead of newer signature methods. Helpful for S3-like systems that don't have AWS Signature v4 yet.")
+    optparser.add_option("--signature-v4", dest="signature_v4", action="store_true", help="Force usage of AWS Signature version 4.")
 
     optparser.set_usage(optparser.usage + " COMMAND [parameters]")
     optparser.set_description('S3cmd is a tool for managing objects in '+
@@ -2309,6 +2310,17 @@ def main():
                 raise ParameterError("Invalid character(s) in header name '%s': \"%s\"" % (key, key_inval))
             debug(u"Updating Config.Config extra_headers[%s] -> %s" % (key.strip().lower(), val.strip()))
             cfg.extra_headers[key.strip().lower()] = val.strip()
+
+    # Process server side encryption options
+    if options.server_side_encryption:
+        if options.server_side_encryption == "sse-kms":
+            cfg.server_side_encryption = "aws:kms"
+        elif options.server_side_encryption == "sse-s3":
+            cfg.server_side_encryption = "AES256"
+        else: 
+            error(u"Invalid server-side encryption method specified")
+            sys.exit(EX_USAGE)
+
 
     # Process --remove-header
     if options.remove_headers:

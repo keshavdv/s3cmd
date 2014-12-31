@@ -140,7 +140,7 @@ class S3Request(object):
         return param_str and "?" + param_str[1:]
 
     def use_signature_v2(self):
-        if self.s3.endpoint_requires_signature_v4:
+        if self.s3.endpoint_requires_signature_v4 or self.s3.config.signature_v4:
             return False
         # in case of bad DNS name due to bucket name v2 will be used
         # this way we can still use capital letters in bucket names for the older regions
@@ -529,7 +529,7 @@ class S3(object):
 
         ## Set server side encryption
         if self.config.server_side_encryption:
-            headers["x-amz-server-side-encryption"] = "AES256"
+            headers["x-amz-server-side-encryption"] = self.config.server_side_encryption
 
         ## MIME-type handling
         headers["content-type"] = self.content_type(filename=filename)
@@ -678,7 +678,7 @@ class S3(object):
 
         ## Set server side encryption
         if self.config.server_side_encryption:
-            headers["x-amz-server-side-encryption"] = "AES256"
+            headers["x-amz-server-side-encryption"] = self.config.server_side_encryption
 
         if extra_headers:
             headers.update(extra_headers)
@@ -705,7 +705,7 @@ class S3(object):
 
         ## Set server side encryption
         if self.config.server_side_encryption:
-            headers["x-amz-server-side-encryption"] = "AES256"
+            headers["x-amz-server-side-encryption"] = self.config.server_side_encryption
 
         if extra_headers:
             headers.update(extra_headers)
@@ -1185,7 +1185,8 @@ class S3(object):
             raise S3Error(response)
 
         debug("MD5 sums: computed=%s, received=%s" % (md5_computed, response["headers"]["etag"]))
-        if response["headers"]["etag"].strip('"\'') != md5_hash.hexdigest():
+        debug("keys: %s", response["headers"].keys())
+        if ("x-amz-server-side-encryption-aws-kms-key-id" not in response["headers"]) and (response["headers"]["etag"].strip('"\'') != md5_hash.hexdigest()):
             warning("MD5 Sums don't match!")
             if retries:
                 warning("Retrying upload of %s" % (file.name))

@@ -37,7 +37,7 @@ class Config(object):
     human_readable_sizes = False
     extra_headers = SortedDict(ignore_case = True)
     force = False
-    server_side_encryption = False
+    server_side_encryption = None
     enable = None
     get_continue = False
     put_continue = False
@@ -117,6 +117,8 @@ class Config(object):
     expiry_date = ""
     expiry_prefix = ""
     signature_v2 = False
+    signature_v4 = False
+
 
     ## Creating a singleton
     def __new__(self, configfile = None, access_key=None, secret_key=None):
